@@ -8,7 +8,7 @@ public class PlayerMove : MonoBehaviour
 
     private float hor;
     private float ver;
-
+    public Animator animator;
     private SpriteRenderer spriteRenderer;
     public Rigidbody2D rgb;
 
@@ -31,6 +31,22 @@ public class PlayerMove : MonoBehaviour
         else if (hor == 1)
         {
             spriteRenderer.flipX = false;
+        }
+        if (hor != 0 || ver != 0)
+        {
+            animator.SetBool("run", true);
+        }
+        else
+        {
+            animator.SetBool("run", false);
+        }
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            animator.SetBool("Catch", true);
+        }
+        else
+        {
+            animator.SetBool("Catch", false);
         }
 
         // Задаем скорость Rigidbody2D по обеим осям
