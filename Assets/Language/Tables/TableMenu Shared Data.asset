@@ -14,7 +14,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_TableCollectionName: TableMenu
   m_TableCollectionNameGuidString: 188bde66ff73d3c4a80f8f72dec038fc
-  m_Entries: []
+  m_Entries:
+  - m_Id: 1299257257984
+    m_Key: mainMenu.Play
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1952780152832
+    m_Key: mainMenu.Saves
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1985747382272
+    m_Key: mainMenu.Exit
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:
