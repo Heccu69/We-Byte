@@ -17,7 +17,37 @@ public class ConveyorSpawner : MonoBehaviour
     public Sprite platformSprite; // Спрайт платформы
     public Vector3 platformOffset = new Vector3(0, -0.15f, 0); // Смещение платформы относительно коржа
     
+    [Header("Ограничения")]
+    public int maxActivePairs = 5; // Максимальное количество активных пар
+    public int maxPlatformsInScene = 5; // Максимум платформ в иерархии
+    public int maxKorzhsInScene = 25; // Максимум коржей в иерархии
+    
     private float nextSpawnTime = 0f;
+    
+    // Список активных пар (платформа, корж)
+    private List<ConveyorPairData> activePairs = new List<ConveyorPairData>();
+    
+    // Списки для отслеживания порядка создания
+    private List<GameObject> allPlatforms = new List<GameObject>(); // Все платформы в порядке создания
+    private List<GameObject> allKorzhs = new List<GameObject>(); // Все коржи в порядке создания
+    
+    [System.Serializable]
+    public class ConveyorPairData
+    {
+        public GameObject platform;
+        public GameObject korzh;
+        
+        public ConveyorPairData(GameObject platform, GameObject korzh)
+        {
+            this.platform = platform;
+            this.korzh = korzh;
+        }
+        
+        public bool IsValid()
+        {
+            return platform != null && korzh != null;
+        }
+    }
     
     void Update()
     {
@@ -31,6 +61,19 @@ public class ConveyorSpawner : MonoBehaviour
     
     void SpawnKorzh()
     {
+        // Очищаем список от удаленных объектов
+        CleanupInvalidPairs();
+        
+        // Проверяем ЖЕСТКИЕ лимиты на количество объектов в сцене
+        EnforceSceneLimits();
+        
+        // Проверяем лимит пар - если превышен, удаляем самую старую пару
+        if (activePairs.Count >= maxActivePairs)
+        {
+            Debug.Log($"Достигнут лимит в {maxActivePairs} активных пар. Удаляем самую старую.");
+            RemoveOldestPair();
+        }
+        
         Vector3 platformSpawnPos = transform.position + new Vector3(0, spawnOffsetY, 0);
         
         if (korzhPrefab == null)
@@ -53,19 +96,44 @@ public class ConveyorSpawner : MonoBehaviour
         
         GameObject korzh = Instantiate(korzhPrefab, korzhSpawnPos, Quaternion.identity);
         
-        // Настраиваем Rigidbody2D для полной физики
+        // Настраиваем Rigidbody2D для складывания и толкания
         Rigidbody2D rb = korzh.GetComponent<Rigidbody2D>();
         if (rb != null)
         {
-            rb.bodyType = RigidbodyType2D.Dynamic;
-            rb.gravityScale = 1f; // Корж упадет на платформу
-            rb.mass = 1f;
-            rb.drag = 0f;
-            rb.angularDrag = 0.05f;
+            rb.bodyType = RigidbodyType2D.Dynamic; // Dynamic для физики
+            rb.gravityScale = 1f;
+            rb.mass = 1.5f; // Меньше массы игрока (3) - можно толкнуть
+            rb.drag = 0.5f; // Сопротивление - корж быстро останавливается
+            rb.angularDrag = 0.5f;
+            rb.constraints = RigidbodyConstraints2D.FreezeRotation; // Не вращаться
+            rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+        }
+        
+        // Настраиваем коллайдер для складывания
+        BoxCollider2D col = korzh.GetComponent<BoxCollider2D>();
+        if (col != null)
+        {
+            col.isTrigger = false; // НЕ триггер - физические столкновения
         }
         
         // Добавляем тег для конвейера
         korzh.tag = "ConveyorObject";
+        
+        // Добавляем компонент для связи с платформой
+        ConveyorPairLink korzhLink = korzh.AddComponent<ConveyorPairLink>();
+        korzhLink.pairedObject = platform;
+        
+        ConveyorPairLink platformLink = platform.AddComponent<ConveyorPairLink>();
+        platformLink.pairedObject = korzh;
+        
+        // Регистрируем пару
+        ConveyorPairData pair = new ConveyorPairData(platform, korzh);
+        activePairs.Add(pair);
+        
+        // Регистрируем объекты в списках (в порядке создания)
+        allPlatforms.Add(platform);
+        allKorzhs.Add(korzh);
+        Debug.Log($"Зарегистрированы: платформа #{allPlatforms.Count}, корж #{allKorzhs.Count}");
         
         // Устанавливаем случайный спрайт
         if (korzhSprites != null && korzhSprites.Length > 0)
@@ -77,7 +145,7 @@ public class ConveyorSpawner : MonoBehaviour
             }
         }
         
-        Debug.Log($"Заспавнены: платформа на {platformSpawnPos}, корж на {korzhSpawnPos}");
+        Debug.Log($"Заспавнены: платформа на {platformSpawnPos}, корж на {korzhSpawnPos}. Активных пар: {activePairs.Count}/{maxActivePairs}");
     }
     
     GameObject CreatePlatform(Vector3 position)
@@ -111,6 +179,151 @@ public class ConveyorSpawner : MonoBehaviour
         platform.tag = "ConveyorObject";
         
         return platform;
+    }
+    
+    // Очистка списка от удаленных объектов
+    void CleanupInvalidPairs()
+    {
+        activePairs.RemoveAll(pair => !pair.IsValid());
+    }
+    
+    // Подсчет всех платформ в сцене
+    int CountPlatformsInScene()
+    {
+        // Очищаем список от null
+        allPlatforms.RemoveAll(p => p == null);
+        return allPlatforms.Count;
+    }
+    
+    // Подсчет всех коржей в сцене
+    int CountKorzhsInScene()
+    {
+        // Очищаем список от null
+        allKorzhs.RemoveAll(k => k == null);
+        return allKorzhs.Count;
+    }
+    
+    // Принудительное соблюдение лимитов в сцене
+    void EnforceSceneLimits()
+    {
+        // Проверяем платформы
+        int platformCount = CountPlatformsInScene();
+        if (platformCount >= maxPlatformsInScene)
+        {
+            Debug.LogWarning($"Превышен лимит платформ: {platformCount}/{maxPlatformsInScene}. Удаляем старые.");
+            RemoveOldestPlatforms(platformCount - maxPlatformsInScene + 1);
+        }
+        
+        // Проверяем коржи
+        int korzhCount = CountKorzhsInScene();
+        if (korzhCount >= maxKorzhsInScene)
+        {
+            Debug.LogWarning($"Превышен лимит коржей: {korzhCount}/{maxKorzhsInScene}. Удаляем старые.");
+            RemoveOldestKorzhs(korzhCount - maxKorzhsInScene + 1);
+        }
+        
+        Debug.Log($"Проверка лимитов: Платформ {platformCount}/{maxPlatformsInScene}, Коржей {korzhCount}/{maxKorzhsInScene}");
+    }
+    
+    // Удаление старых платформ (самые первые в списке)
+    void RemoveOldestPlatforms(int count)
+    {
+        // Очищаем список от null
+        allPlatforms.RemoveAll(p => p == null);
+        
+        // Удаляем первые N платформ (самые старые)
+        int toRemove = Mathf.Min(count, allPlatforms.Count);
+        for (int i = 0; i < toRemove; i++)
+        {
+            if (allPlatforms[0] != null)
+            {
+                Debug.Log($"Удаляем старую платформу #{i+1}: {allPlatforms[0].name}");
+                Destroy(allPlatforms[0]);
+            }
+            allPlatforms.RemoveAt(0); // Удаляем из списка
+        }
+    }
+    
+    // Удаление старых коржей (кроме подобранных)
+    void RemoveOldestKorzhs(int count)
+    {
+        // Очищаем список от null
+        allKorzhs.RemoveAll(k => k == null);
+        
+        int removed = 0;
+        int index = 0;
+        
+        // Удаляем старые коржи (кроме подобранных)
+        while (removed < count && index < allKorzhs.Count)
+        {
+            GameObject korzhObj = allKorzhs[index];
+            
+            if (korzhObj != null)
+            {
+                PickupObject pickupObj = korzhObj.GetComponent<PickupObject>();
+                
+                // Удаляем только НЕ подобранные
+                if (pickupObj == null || !pickupObj.isPickedUp)
+                {
+                    Debug.Log($"Удаляем старый корж #{index+1}: {korzhObj.name}");
+                    Destroy(korzhObj);
+                    allKorzhs.RemoveAt(index);
+                    removed++;
+                }
+                else
+                {
+                    Debug.Log($"Корж #{index+1} подобран - пропускаем");
+                    index++; // Пропускаем подобранный
+                }
+            }
+            else
+            {
+                allKorzhs.RemoveAt(index); // Удаляем null
+            }
+        }
+    }
+    
+    // Удаление самой старой пары (первой в списке)
+    void RemoveOldestPair()
+    {
+        if (activePairs.Count == 0) return;
+        
+        // Самая старая пара - первая в списке
+        ConveyorPairData oldestPair = activePairs[0];
+        
+        Debug.Log($"Удаляем самую старую пару: {oldestPair.platform?.name} + {oldestPair.korzh?.name}");
+        
+        // Удаляем оба объекта
+        if (oldestPair.platform != null)
+        {
+            Destroy(oldestPair.platform);
+        }
+        
+        if (oldestPair.korzh != null)
+        {
+            // Проверяем, не подобран ли корж
+            PickupObject pickupObj = oldestPair.korzh.GetComponent<PickupObject>();
+            if (pickupObj == null || !pickupObj.isPickedUp)
+            {
+                Destroy(oldestPair.korzh);
+            }
+            else
+            {
+                Debug.Log($"Корж {oldestPair.korzh.name} подобран - не удаляем");
+            }
+        }
+        
+        // Удаляем из списка
+        activePairs.RemoveAt(0);
+        
+        Debug.Log($"Старая пара удалена. Активных пар: {activePairs.Count}/{maxActivePairs}");
+    }
+    
+    // Публичный метод для удаления пары
+    public void RemovePair(GameObject obj)
+    {
+        activePairs.RemoveAll(pair => pair.platform == obj || pair.korzh == obj);
+        Debug.Log($"Пара удалена. Активных пар: {activePairs.Count}/{maxActivePairs}");
     }
     
     // Визуализация точки спавна в редакторе

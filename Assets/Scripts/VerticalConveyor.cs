@@ -62,15 +62,35 @@ public class VerticalConveyor : MonoBehaviour
             
             if (moveUp && obj.position.y > worldTopBound)
             {
-                Debug.Log($"Объект {obj.name} удален за верхней границей");
-                Destroy(obj.gameObject);
-                objectsOnConveyor.RemoveAt(i);
+                // Проверяем, не подобран ли объект
+                PickupObject pickupCheck = obj.GetComponent<PickupObject>();
+                if (pickupCheck != null && pickupCheck.isPickedUp)
+                {
+                    Debug.Log($"Объект {obj.name} подобран - не удаляем");
+                    objectsOnConveyor.RemoveAt(i);
+                }
+                else
+                {
+                    Debug.Log($"Объект {obj.name} удален за верхней границей");
+                    Destroy(obj.gameObject);
+                    objectsOnConveyor.RemoveAt(i);
+                }
             }
             else if (!moveUp && obj.position.y < worldBottomBound)
             {
-                Debug.Log($"Объект {obj.name} удален за нижней границей");
-                Destroy(obj.gameObject);
-                objectsOnConveyor.RemoveAt(i);
+                // Проверяем, не подобран ли объект
+                PickupObject pickupCheck = obj.GetComponent<PickupObject>();
+                if (pickupCheck != null && pickupCheck.isPickedUp)
+                {
+                    Debug.Log($"Объект {obj.name} подобран - не удаляем");
+                    objectsOnConveyor.RemoveAt(i);
+                }
+                else
+                {
+                    Debug.Log($"Объект {obj.name} удален за нижней границей");
+                    Destroy(obj.gameObject);
+                    objectsOnConveyor.RemoveAt(i);
+                }
             }
         }
     }

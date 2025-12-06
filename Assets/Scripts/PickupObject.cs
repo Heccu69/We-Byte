@@ -63,6 +63,33 @@ public class PickupObject : MonoBehaviour
         currentHandTransform = handTransform;
         Debug.Log($"Подобран объект: {objectName}");
         
+        // Разрываем связь с платформой (платформа долетит до границы)
+        ConveyorPairLink pairLink = GetComponent<ConveyorPairLink>();
+        if (pairLink != null)
+        {
+            Debug.Log($"Разрываем связь с платформой - платформа долетит до границы");
+            
+            // Уведомляем спавнер об удалении пары
+            ConveyorSpawner spawner = FindObjectOfType<ConveyorSpawner>();
+            if (spawner != null)
+            {
+                spawner.RemovePair(gameObject);
+            }
+            
+            // Разрываем связь (не удаляем платформу!)
+            if (pairLink.pairedObject != null)
+            {
+                // Убираем обратную связь у платформы
+                ConveyorPairLink platformLink = pairLink.pairedObject.GetComponent<ConveyorPairLink>();
+                if (platformLink != null)
+                {
+                    platformLink.pairedObject = null;
+                }
+            }
+            
+            pairLink.pairedObject = null;
+        }
+        
         // Отключаем коллайдер (чтобы не сталкиваться с игроком)
         if (col != null)
         {

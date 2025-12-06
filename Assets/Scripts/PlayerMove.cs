@@ -15,6 +15,17 @@ public class PlayerMove : MonoBehaviour
     void Start()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
+        
+        // Настраиваем физику игрока для толкания объектов
+        if (rgb != null)
+        {
+            rgb.bodyType = RigidbodyType2D.Dynamic; // Dynamic для физических взаимодействий
+            rgb.gravityScale = 0f; // Нет гравитации (вид сверху)
+            rgb.mass = 3f; // Увеличенная масса для толкания коржей
+            rgb.drag = 0f; // Нет сопротивления
+            rgb.angularDrag = 0f;
+            rgb.constraints = RigidbodyConstraints2D.FreezeRotation; // Не вращаться
+        }
     }
 
     void Update()
