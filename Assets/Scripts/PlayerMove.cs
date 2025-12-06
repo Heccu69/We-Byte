@@ -32,21 +32,29 @@ public class PlayerMove : MonoBehaviour
         {
             spriteRenderer.flipX = false;
         }
-        if (hor != 0 || ver != 0)
+        // Анимация движения (если параметр существует)
+        if (animator != null)
         {
-            animator.SetBool("run", true);
+            if (hor != 0 || ver != 0)
+            {
+                animator.SetBool("run", true);
+            }
+            else
+            {
+                animator.SetBool("run", false);
+            }
         }
-        else
+        // Анимация подбора (если параметр существует)
+        if (animator != null)
         {
-            animator.SetBool("run", false);
-        }
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            animator.SetBool("Catch", true);
-        }
-        else
-        {
-            animator.SetBool("Catch", false);
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                animator.SetBool("Catch", true);
+            }
+            else
+            {
+                animator.SetBool("Catch", false);
+            }
         }
 
         // Задаем скорость Rigidbody2D по обеим осям
