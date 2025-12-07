@@ -1,0 +1,145 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public enum ObjectType
+{
+    Korzh,      // Корж
+    Cockroach,  // Таракан
+    Spoon       // Ложка
+}
+
+public class PickupObject : MonoBehaviour
+{
+    public ObjectType objectType;
+    public string objectName;
+    
+    [HideInInspector]
+    public bool isPickedUp = false;
+    
+    private Rigidbody2D rb;
+    private Collider2D col;
+    private Transform originalParent;
+    private Vector3 originalScale; // Исходный масштаб
+    private Transform currentHandTransform; // Рука, к которой прикреплен
+    private Vector3 handOffset = new Vector3(0.5f, 0f, 0f); // Смещение относительно руки
+    
+    private void Start()
+    {
+        // Устанавливаем имя объекта в зависимости от типа
+        switch (objectType)
+        {
+            case ObjectType.Korzh:
+                objectName = "Корж";
+                break;
+            case ObjectType.Cockroach:
+                objectName = "Таракан";
+                break;
+            case ObjectType.Spoon:
+                objectName = "Ложка";
+                break;
+        }
+        
+        rb = GetComponent<Rigidbody2D>();
+        col = GetComponent<Collider2D>();
+        originalParent = transform.parent;
+        originalScale = transform.localScale; // Сохраняем исходный масштаб
+    }
+    
+    void LateUpdate()
+    {
+        // Если объект в руках, принудительно обновляем позицию
+        if (isPickedUp && currentHandTransform != null)
+        {
+            // Позиционируем объект рядом с рукой, а не в ней
+            transform.position = currentHandTransform.position + handOffset;
+            transform.rotation = Quaternion.identity; // Без поворота
+        }
+    }
+    
+    public void Pickup(Transform handTransform)
+    {
+        if (isPickedUp) return;
+        
+        isPickedUp = true;
+        currentHandTransform = handTransform;
+        Debug.Log($"Подобран объект: {objectName}");
+        
+        // Разрываем связь с платформой (платформа долетит до границы)
+        ConveyorPairLink pairLink = GetComponent<ConveyorPairLink>();
+        if (pairLink != null)
+        {
+            Debug.Log($"Разрываем связь с платформой - платформа долетит до границы");
+            
+            // Уведомляем спавнер об удалении пары
+            ConveyorSpawner spawner = FindObjectOfType<ConveyorSpawner>();
+            if (spawner != null)
+            {
+                spawner.RemovePair(gameObject);
+            }
+            
+            // Разрываем связь (не удаляем платформу!)
+            if (pairLink.pairedObject != null)
+            {
+                // Убираем обратную связь у платформы
+                ConveyorPairLink platformLink = pairLink.pairedObject.GetComponent<ConveyorPairLink>();
+                if (platformLink != null)
+                {
+                    platformLink.pairedObject = null;
+                }
+            }
+            
+            pairLink.pairedObject = null;
+        }
+        
+        // Отключаем коллайдер (чтобы не сталкиваться с игроком)
+        if (col != null)
+        {
+            col.enabled = false;
+        }
+        
+        // Отключаем физику в руках
+        if (rb != null)
+        {
+            rb.velocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+            rb.gravityScale = 0f;
+            rb.bodyType = RigidbodyType2D.Kinematic; // Kinematic в руках
+        }
+        
+        // НЕ прикрепляем к руке игрока (объект остается независимым)
+        // Позиция будет обновляться в LateUpdate
+        // Масштаб остается оригинальным - не меняем!
+    }
+    
+    public void Drop()
+    {
+        if (!isPickedUp) return;
+        
+        isPickedUp = false;
+        currentHandTransform = null;
+        Debug.Log($"Выброшен объект: {objectName}");
+        
+        // Объект уже не дочерний элемент руки, просто восстанавливаем родителя если был
+        if (originalParent != null)
+        {
+            transform.SetParent(originalParent);
+        }
+        // Масштаб не менялся, восстанавливать не нужно
+        
+        // Включаем коллайдер обратно
+        if (col != null)
+        {
+            col.enabled = true;
+        }
+        
+        // Включаем физику обратно
+        if (rb != null)
+        {
+            rb.bodyType = RigidbodyType2D.Dynamic; // Dynamic после выбрасывания
+            rb.gravityScale = 1f;
+            rb.velocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+        }
+    }
+}
