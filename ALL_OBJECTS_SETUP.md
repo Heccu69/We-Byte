@@ -442,50 +442,48 @@ PC → OrderDisplay → Order Text ← перетащить OrderText
 
 ---
 
-### CustomerImage (изображение клиента)
+### CustomerImage + CustomerDialogueText (клиенты с репликами)
 
-**Создание:**
+**Создание Image:**
 ```
 1. Canvas → ПКМ → UI → Image
 2. Назвать: "CustomerImage"
+3. Настроить: Width: 200, Height: 200, Preserve Aspect: ✓
 ```
 
-**Настройка:**
+**Создание Text для реплик:**
 ```
-Rect Transform:
-  - Anchor Presets: Top Left
-  - Pos X: 100
-  - Pos Y: -250
-  - Width: 200
-  - Height: 200
-
-Image:
-  - Source Image: (пусто - будет меняться автоматически)
-  - Color: белый
-  - Preserve Aspect: ✓
+1. Canvas → ПКМ → UI → Text - TextMeshPro
+2. Назвать: "CustomerDialogueText"
+3. Настроить: Font Size: 18, Alignment: Center, Wrapping: Enabled
+4. Разместить под CustomerImage
 ```
 
-**Подготовка спрайтов клиентов:**
+**Подготовка спрайтов:**
 ```
-1. Создать папку: Assets/Sprites/Customers/
-2. Поместить туда PNG спрайты клиентов (256x256 или 512x512)
-3. Настроить каждый спрайт:
-   - Texture Type: Sprite (2D and UI)
-   - Apply
+1. Папка: Assets/Sprites/Customers/
+2. PNG спрайты (256x256 или 512x512)
+3. Texture Type: Sprite (2D and UI)
 ```
 
 **Связать с OrderDisplay:**
 ```
 OrderDisplay (Script):
   Клиенты:
-    - Customer Image ← перетащить CustomerImage
-    - Customer Sprites:
-        Size: 5 (количество клиентов)
-        Element 0 ← спрайт клиента 1
-        Element 1 ← спрайт клиента 2
-        Element 2 ← спрайт клиента 3
-        и т.д.
+    - Customer Image ← CustomerImage
+    - Customer Dialogue Text ← CustomerDialogueText
+    - Customers:
+        Size: 5
+        Element 0: (ПЕРВЫЙ клиент)
+          - Customer Sprite ← спрайт 1
+          - Customer Dialogue: "Дайте мне торт!"
+        Element 1: (ВТОРОЙ клиент)
+          - Customer Sprite ← спрайт 2
+          - Customer Dialogue: "Я хочу большой торт!"
+        Element 2, 3, 4... (остальные)
 ```
+
+**Порядок:** Element 0 → 1 → 2 → 3 → 4 → 0 (цикл)
 
 **Подробная инструкция:** см. `CUSTOMER_SETUP.md`
 

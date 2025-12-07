@@ -4,6 +4,17 @@ using UnityEngine;
 using TMPro;
 
 /// <summary>
+/// Данные одного клиента
+/// </summary>
+[System.Serializable]
+public class CustomerData
+{
+    public Sprite customerSprite; // Спрайт клиента
+    [TextArea(2, 4)]
+    public string customerDialogue; // Реплика клиента
+}
+
+/// <summary>
 /// Отображение заказа на PC
 /// </summary>
 public class OrderDisplay : MonoBehaviour
@@ -14,7 +25,10 @@ public class OrderDisplay : MonoBehaviour
     
     [Header("Клиенты")]
     public UnityEngine.UI.Image customerImage; // Image для отображения спрайта клиента
-    public Sprite[] customerSprites; // Массив спрайтов клиентов
+    public TextMeshProUGUI customerDialogueText; // Текст реплики клиента
+    public CustomerData[] customers; // Массив клиентов в порядке очереди
+    
+    private int currentCustomerIndex = 0; // Индекс текущего клиента
     
     void Start()
     {
@@ -33,23 +47,40 @@ public class OrderDisplay : MonoBehaviour
             orderText.text = $"ЗАКАЗ:\n{korzhCount} коржей";
         }
         
-        // Обновляем спрайт клиента
-        UpdateCustomerSprite();
+        // Показываем следующего клиента в очереди
+        ShowNextCustomer();
     }
     
     /// <summary>
-    /// Выбрать случайного клиента
+    /// Показать следующего клиента в очереди
     /// </summary>
-    void UpdateCustomerSprite()
+    void ShowNextCustomer()
     {
-        if (customerImage != null && customerSprites != null && customerSprites.Length > 0)
+        if (customers == null || customers.Length == 0)
         {
-            // Выбираем случайный спрайт
-            Sprite randomCustomer = customerSprites[Random.Range(0, customerSprites.Length)];
-            customerImage.sprite = randomCustomer;
-            
-            // Включаем отображение клиента
+            Debug.LogWarning("Массив клиентов пуст!");
+            return;
+        }
+        
+        // Получаем текущего клиента
+        CustomerData currentCustomer = customers[currentCustomerIndex];
+        
+        // Обновляем спрайт
+        if (customerImage != null && currentCustomer.customerSprite != null)
+        {
+            customerImage.sprite = currentCustomer.customerSprite;
             customerImage.enabled = true;
         }
+        
+        // Обновляем реплику
+        if (customerDialogueText != null)
+        {
+            customerDialogueText.text = currentCustomer.customerDialogue;
+        }
+        
+        // Переходим к следующему клиенту (циклически)
+        currentCustomerIndex = (currentCustomerIndex + 1) % customers.Length;
+        
+        Debug.Log($"👤 Клиент говорит: {currentCustomer.customerDialogue}");
     }
 }
