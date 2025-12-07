@@ -22,6 +22,7 @@ public class PickupObject : MonoBehaviour
     private Transform originalParent;
     private Vector3 originalScale; // Исходный масштаб
     private Transform currentHandTransform; // Рука, к которой прикреплен
+    private Vector3 handOffset = new Vector3(0.5f, 0f, 0f); // Смещение относительно руки
     
     private void Start()
     {
@@ -50,8 +51,9 @@ public class PickupObject : MonoBehaviour
         // Если объект в руках, принудительно обновляем позицию
         if (isPickedUp && currentHandTransform != null)
         {
-            transform.position = currentHandTransform.position;
-            transform.rotation = currentHandTransform.rotation;
+            // Позиционируем объект рядом с рукой, а не в ней
+            transform.position = currentHandTransform.position + handOffset;
+            transform.rotation = Quaternion.identity; // Без поворота
         }
     }
     
@@ -105,13 +107,9 @@ public class PickupObject : MonoBehaviour
             rb.bodyType = RigidbodyType2D.Kinematic; // Kinematic в руках
         }
         
-        // Прикрепляем к руке игрока
-        transform.SetParent(handTransform);
-        transform.localPosition = Vector3.zero;
-        transform.localRotation = Quaternion.identity;
-        
-        // Уменьшаем размер объекта в руках
-        transform.localScale = Vector3.one * 0.5f;
+        // НЕ прикрепляем к руке игрока (объект остается независимым)
+        // Позиция будет обновляться в LateUpdate
+        // Масштаб остается оригинальным - не меняем!
     }
     
     public void Drop()
@@ -122,9 +120,12 @@ public class PickupObject : MonoBehaviour
         currentHandTransform = null;
         Debug.Log($"Выброшен объект: {objectName}");
         
-        // Отсоединяем от руки
-        transform.SetParent(originalParent);
-        transform.localScale = originalScale; // Восстанавливаем исходный масштаб
+        // Объект уже не дочерний элемент руки, просто восстанавливаем родителя если был
+        if (originalParent != null)
+        {
+            transform.SetParent(originalParent);
+        }
+        // Масштаб не менялся, восстанавливать не нужно
         
         // Включаем коллайдер обратно
         if (col != null)

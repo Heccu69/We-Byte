@@ -11,10 +11,12 @@ public class PlayerMove : MonoBehaviour
     public Animator animator;
     private SpriteRenderer spriteRenderer;
     public Rigidbody2D rgb;
+    private PlayerCatch playerCatch;
 
     void Start()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
+        playerCatch = GetComponent<PlayerCatch>();
         
         // Настраиваем физику игрока для толкания объектов
         if (rgb != null)
@@ -44,17 +46,11 @@ public class PlayerMove : MonoBehaviour
             spriteRenderer.flipX = false;
         }
         
-        // Анимация подбора (если параметр существует)
-        if (animator != null)
+        // Анимация подбора - остается активной, пока игрок держит объект
+        if (animator != null && playerCatch != null)
         {
-            if (Input.GetKeyDown(KeyCode.E))
-            {
-                animator.SetBool("Catch", true);
-            }
-            else
-            {
-                animator.SetBool("Catch", false);
-            }
+            // Устанавливаем анимацию взятия, если игрок держит объект
+            animator.SetBool("Catch", playerCatch.HasObject());
         }
 
         // Задаем скорость Rigidbody2D по обеим осям
