@@ -137,6 +137,52 @@ public static class SaveSystem
         return -1;
     }
 
+    /// <summary>
+    /// Получить последнее сохранение (с самой поздней датой)
+    /// </summary>
+    public static SaveData GetLastSave(out int slotIndex)
+    {
+        SaveData[] allSaves = GetAllSlots();
+        SaveData lastSave = null;
+        slotIndex = -1;
+        
+        for (int i = 0; i < allSaves.Length; i++)
+        {
+            if (allSaves[i] != null)
+            {
+                if (lastSave == null || IsNewerSave(allSaves[i], lastSave))
+                {
+                    lastSave = allSaves[i];
+                    slotIndex = i;
+                }
+            }
+        }
+        
+        return lastSave;
+    }
+
+    /// <summary>
+    /// Проверить, является ли первое сохранение более новым чем второе
+    /// </summary>
+    private static bool IsNewerSave(SaveData save1, SaveData save2)
+    {
+        if (string.IsNullOrEmpty(save1.saveDateTime))
+            return false;
+        if (string.IsNullOrEmpty(save2.saveDateTime))
+            return true;
+        
+        try
+        {
+            System.DateTime date1 = System.DateTime.ParseExact(save1.saveDateTime, "dd.MM.yyyy HH:mm", null);
+            System.DateTime date2 = System.DateTime.ParseExact(save2.saveDateTime, "dd.MM.yyyy HH:mm", null);
+            return date1 > date2;
+        }
+        catch
+        {
+            return string.Compare(save1.saveDateTime, save2.saveDateTime) > 0;
+        }
+    }
+
     // ===== СТАРЫЕ МЕТОДЫ ДЛЯ СОВМЕСТИМОСТИ =====
 
     /// <summary>

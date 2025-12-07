@@ -10,7 +10,6 @@ public class MainMenu : MonoBehaviour
 {
     [Header("UI Панели")]
     public GameObject menuPanel; // Главная панель меню
-    public GameObject savesPanel; // Панель сохранений
     public GameObject settingsPanel; // Панель настроек
     
     void Start()
@@ -25,7 +24,6 @@ public class MainMenu : MonoBehaviour
     public void ShowMainMenu()
     {
         if (menuPanel != null) menuPanel.SetActive(true);
-        if (savesPanel != null) savesPanel.SetActive(false);
         if (settingsPanel != null) settingsPanel.SetActive(false);
     }
     
@@ -40,13 +38,42 @@ public class MainMenu : MonoBehaviour
     }
     
     /// <summary>
-    /// Кнопка "Сохранения" - открывает панель сохранений
+    /// Кнопка "Продолжить" (SavesButton) - загружает последнее сохранение и запускает игру
     /// </summary>
     public void OnSavesButton()
     {
-        Debug.Log("💾 Открываем сохранения");
-        if (menuPanel != null) menuPanel.SetActive(false);
-        if (savesPanel != null) savesPanel.SetActive(true);
+        Debug.Log("🎮 Продолжаем игру с последнего сохранения");
+        
+        // Находим последнее сохранение
+        int slotIndex;
+        SaveData lastSave = SaveSystem.GetLastSave(out slotIndex);
+        
+        if (lastSave != null)
+        {
+            // Сохраняем индекс слота для загрузки
+            PlayerPrefs.SetInt("CurrentSaveSlot", slotIndex);
+            PlayerPrefs.Save();
+            
+            Debug.Log($"Загружаем последнее сохранение из слота {slotIndex}");
+            
+            // Загружаем игровую сцену
+            SceneManager.LoadScene("GameScene");
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ Нет сохранений! Начинаем новую игру.");
+            
+            // Если нет сохранений, создаем новое и начинаем игру
+            int newSlotIndex = SaveSystem.CreateNewSave("Новое сохранение");
+            
+            if (newSlotIndex >= 0)
+            {
+                PlayerPrefs.SetInt("CurrentSaveSlot", newSlotIndex);
+                PlayerPrefs.Save();
+            }
+            
+            SceneManager.LoadScene("GameScene");
+        }
     }
     
     /// <summary>
