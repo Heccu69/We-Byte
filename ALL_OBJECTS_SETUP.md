@@ -442,6 +442,55 @@ PC → OrderDisplay → Order Text ← перетащить OrderText
 
 ---
 
+### CustomerImage (изображение клиента)
+
+**Создание:**
+```
+1. Canvas → ПКМ → UI → Image
+2. Назвать: "CustomerImage"
+```
+
+**Настройка:**
+```
+Rect Transform:
+  - Anchor Presets: Top Left
+  - Pos X: 100
+  - Pos Y: -250
+  - Width: 200
+  - Height: 200
+
+Image:
+  - Source Image: (пусто - будет меняться автоматически)
+  - Color: белый
+  - Preserve Aspect: ✓
+```
+
+**Подготовка спрайтов клиентов:**
+```
+1. Создать папку: Assets/Sprites/Customers/
+2. Поместить туда PNG спрайты клиентов (256x256 или 512x512)
+3. Настроить каждый спрайт:
+   - Texture Type: Sprite (2D and UI)
+   - Apply
+```
+
+**Связать с OrderDisplay:**
+```
+OrderDisplay (Script):
+  Клиенты:
+    - Customer Image ← перетащить CustomerImage
+    - Customer Sprites:
+        Size: 5 (количество клиентов)
+        Element 0 ← спрайт клиента 1
+        Element 1 ← спрайт клиента 2
+        Element 2 ← спрайт клиента 3
+        и т.д.
+```
+
+**Подробная инструкция:** см. `CUSTOMER_SETUP.md`
+
+---
+
 ### CheckOrderButton (кнопка проверки)
 
 **Создание:**

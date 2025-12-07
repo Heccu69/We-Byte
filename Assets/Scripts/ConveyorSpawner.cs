@@ -70,7 +70,6 @@ public class ConveyorSpawner : MonoBehaviour
         // Проверяем лимит пар - если превышен, удаляем самую старую пару
         if (activePairs.Count >= maxActivePairs)
         {
-            Debug.Log($"Достигнут лимит в {maxActivePairs} активных пар. Удаляем самую старую.");
             RemoveOldestPair();
         }
         
@@ -133,7 +132,6 @@ public class ConveyorSpawner : MonoBehaviour
         // Регистрируем объекты в списках (в порядке создания)
         allPlatforms.Add(platform);
         allKorzhs.Add(korzh);
-        Debug.Log($"Зарегистрированы: платформа #{allPlatforms.Count}, корж #{allKorzhs.Count}");
         
         // Устанавливаем случайный спрайт
         if (korzhSprites != null && korzhSprites.Length > 0)
@@ -145,7 +143,6 @@ public class ConveyorSpawner : MonoBehaviour
             }
         }
         
-        Debug.Log($"Заспавнены: платформа на {platformSpawnPos}, корж на {korzhSpawnPos}. Активных пар: {activePairs.Count}/{maxActivePairs}");
     }
     
     GameObject CreatePlatform(Vector3 position)
@@ -210,7 +207,6 @@ public class ConveyorSpawner : MonoBehaviour
         int platformCount = CountPlatformsInScene();
         if (platformCount >= maxPlatformsInScene)
         {
-            Debug.LogWarning($"Превышен лимит платформ: {platformCount}/{maxPlatformsInScene}. Удаляем старые.");
             RemoveOldestPlatforms(platformCount - maxPlatformsInScene + 1);
         }
         
@@ -218,11 +214,8 @@ public class ConveyorSpawner : MonoBehaviour
         int korzhCount = CountKorzhsInScene();
         if (korzhCount >= maxKorzhsInScene)
         {
-            Debug.LogWarning($"Превышен лимит коржей: {korzhCount}/{maxKorzhsInScene}. Удаляем старые.");
             RemoveOldestKorzhs(korzhCount - maxKorzhsInScene + 1);
         }
-        
-        Debug.Log($"Проверка лимитов: Платформ {platformCount}/{maxPlatformsInScene}, Коржей {korzhCount}/{maxKorzhsInScene}");
     }
     
     // Удаление старых платформ (самые первые в списке)
@@ -237,7 +230,6 @@ public class ConveyorSpawner : MonoBehaviour
         {
             if (allPlatforms[0] != null)
             {
-                Debug.Log($"Удаляем старую платформу #{i+1}: {allPlatforms[0].name}");
                 Destroy(allPlatforms[0]);
             }
             allPlatforms.RemoveAt(0); // Удаляем из списка
@@ -265,14 +257,12 @@ public class ConveyorSpawner : MonoBehaviour
                 // Удаляем только НЕ подобранные
                 if (pickupObj == null || !pickupObj.isPickedUp)
                 {
-                    Debug.Log($"Удаляем старый корж #{index+1}: {korzhObj.name}");
                     Destroy(korzhObj);
                     allKorzhs.RemoveAt(index);
                     removed++;
                 }
                 else
                 {
-                    Debug.Log($"Корж #{index+1} подобран - пропускаем");
                     index++; // Пропускаем подобранный
                 }
             }
@@ -291,8 +281,6 @@ public class ConveyorSpawner : MonoBehaviour
         // Самая старая пара - первая в списке
         ConveyorPairData oldestPair = activePairs[0];
         
-        Debug.Log($"Удаляем самую старую пару: {oldestPair.platform?.name} + {oldestPair.korzh?.name}");
-        
         // Удаляем оба объекта
         if (oldestPair.platform != null)
         {
@@ -309,21 +297,18 @@ public class ConveyorSpawner : MonoBehaviour
             }
             else
             {
-                Debug.Log($"Корж {oldestPair.korzh.name} подобран - не удаляем");
+                // Корж подобран - не удаляем
             }
         }
         
         // Удаляем из списка
         activePairs.RemoveAt(0);
-        
-        Debug.Log($"Старая пара удалена. Активных пар: {activePairs.Count}/{maxActivePairs}");
     }
     
     // Публичный метод для удаления пары
     public void RemovePair(GameObject obj)
     {
         activePairs.RemoveAll(pair => pair.platform == obj || pair.korzh == obj);
-        Debug.Log($"Пара удалена. Активных пар: {activePairs.Count}/{maxActivePairs}");
     }
     
     // Визуализация точки спавна в редакторе

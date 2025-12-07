@@ -43,18 +43,7 @@ public class PlayerMove : MonoBehaviour
         {
             spriteRenderer.flipX = false;
         }
-        // Анимация движения (если параметр существует)
-        if (animator != null)
-        {
-            if (hor != 0 || ver != 0)
-            {
-                animator.SetBool("run", true);
-            }
-            else
-            {
-                animator.SetBool("run", false);
-            }
-        }
+        
         // Анимация подбора (если параметр существует)
         if (animator != null)
         {

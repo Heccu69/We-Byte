@@ -8,8 +8,9 @@ using UnityEngine;
 public class UnderCakePlate : MonoBehaviour
 {
     [Header("Настройки")]
-    public float checkRadius = 2f; // Радиус проверки коржей над тарелкой
-    public float stackTolerance = 0.3f; // Допуск для определения стопки (расстояние между коржами)
+    public Vector2 checkBoxSize = new Vector2(1.5f, 3f); // Размер зоны проверки (ширина, высота)
+    public Vector2 checkBoxOffset = new Vector2(0f, 1.5f); // Смещение зоны вверх от тарелки
+    public float stackTolerance = 1.0f; // Допуск для определения стопки (расстояние между коржами)
     public LayerMask korzhLayer; // Слой коржей (опционально)
     
     [Header("Отладка")]
@@ -28,8 +29,9 @@ public class UnderCakePlate : MonoBehaviour
         // Очищаем список
         korzhsOnPlate.Clear();
         
-        // Находим все коржи в радиусе над тарелкой
-        Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.position, checkRadius);
+        // Находим все коржи в прямоугольной зоне над тарелкой
+        Vector2 boxCenter = (Vector2)transform.position + checkBoxOffset;
+        Collider2D[] colliders = Physics2D.OverlapBoxAll(boxCenter, checkBoxSize, 0f);
         
         foreach (Collider2D col in colliders)
         {
@@ -45,10 +47,12 @@ public class UnderCakePlate : MonoBehaviour
             }
         }
         
+        Debug.Log($"🔍 Найдено коржей в зоне: {korzhsOnPlate.Count}");
+        
         // Подсчитываем коржи в стопке
         int stackCount = CountKorzhsInStack();
         
-        Debug.Log($"Проверка заказа: коржей в стопке = {stackCount}");
+        Debug.Log($"🎂 Проверка заказа: коржей в стопке = {stackCount}");
         
         // Проверяем заказ
         if (OrderSystem.Instance != null)
@@ -82,9 +86,12 @@ public class UnderCakePlate : MonoBehaviour
         // Сортируем коржи по высоте (Y координата)
         korzhsOnPlate.Sort((a, b) => a.transform.position.y.CompareTo(b.transform.position.y));
         
+        Debug.Log("📊 Анализ стопки:");
+        
         // Начинаем с самого нижнего коржа
         List<GameObject> stack = new List<GameObject>();
         stack.Add(korzhsOnPlate[0]);
+        Debug.Log($"  ✅ Корж 1: {korzhsOnPlate[0].name} Y={korzhsOnPlate[0].transform.position.y:F2}");
         
         // Проверяем каждый следующий корж
         for (int i = 1; i < korzhsOnPlate.Count; i++)
@@ -95,20 +102,25 @@ public class UnderCakePlate : MonoBehaviour
             // Вычисляем расстояние между коржами
             float distance = currentKorzh.transform.position.y - previousKorzh.transform.position.y;
             
+            Debug.Log($"  📏 Корж {i+1}: {currentKorzh.name} Y={currentKorzh.transform.position.y:F2}, расстояние={distance:F2}");
+            
             // Если коржи близко друг к другу - они в стопке
             if (distance <= stackTolerance)
             {
                 stack.Add(currentKorzh);
+                Debug.Log($"    ✅ Добавлен в стопку (расстояние {distance:F2} <= {stackTolerance})");
             }
             else
             {
                 // Если расстояние большое - стопка прервана
+                Debug.Log($"    ❌ Стопка прервана! (расстояние {distance:F2} > {stackTolerance}). Сброс счетчика.");
                 // Начинаем новую стопку с текущего коржа
                 stack.Clear();
                 stack.Add(currentKorzh);
             }
         }
         
+        Debug.Log($"✅ Итого в стопке: {stack.Count} коржей");
         return stack.Count;
     }
     
@@ -131,11 +143,12 @@ public class UnderCakePlate : MonoBehaviour
     }
     
     /// <summary>
-    /// Визуализация радиуса проверки в редакторе
+    /// Визуализация зоны проверки в редакторе
     /// </summary>
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(transform.position, checkRadius);
+        Vector3 boxCenter = transform.position + (Vector3)checkBoxOffset;
+        Gizmos.DrawWireCube(boxCenter, checkBoxSize);
     }
 }
