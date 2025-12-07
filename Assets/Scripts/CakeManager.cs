@@ -63,22 +63,60 @@ public class CakeManager : MonoBehaviour
     
     void AutoCollectCakeLayers()
     {
-        // Ищем все объекты с тегом "CakeLayer" или компонентом PickupObject типа Korzh
-        GameObject[] allObjects = FindObjectsOfType<GameObject>();
+        Debug.Log("=== Начинаем автоматический сбор коржей ===");
         
-        foreach (GameObject obj in allObjects)
+        // Ищем все объекты с компонентом PickupObject
+        PickupObject[] allPickups = FindObjectsOfType<PickupObject>();
+        Debug.Log($"Найдено объектов PickupObject: {allPickups.Length}");
+        
+        foreach (PickupObject pickup in allPickups)
         {
-            PickupObject pickup = obj.GetComponent<PickupObject>();
-            if (pickup != null && pickup.objectType == ObjectType.Korzh)
+            Debug.Log($"Проверяем объект: {pickup.gameObject.name}, тип: {pickup.objectType}");
+            
+            if (pickup.objectType == ObjectType.Korzh)
             {
+                // Проверяем, что корж НЕ подобран игроком
+                if (pickup.isPickedUp)
+                {
+                    Debug.Log($"  ✗ Корж {pickup.gameObject.name} в руках игрока - пропускаем");
+                    continue;
+                }
+                
+                // Проверяем, что корж НЕ на конвейере (не связан с платформой)
+                ConveyorPairLink pairLink = pickup.GetComponent<ConveyorPairLink>();
+                if (pairLink != null && pairLink.pairedObject != null)
+                {
+                    Debug.Log($"  ✗ Корж {pickup.gameObject.name} на конвейере (связан с платформой) - пропускаем");
+                    continue;
+                }
+                
+                // Проверяем, что корж не движется (остановился)
+                Rigidbody2D rb = pickup.GetComponent<Rigidbody2D>();
+                if (rb != null && rb.velocity.magnitude > 0.1f)
+                {
+                    Debug.Log($"  ✗ Корж {pickup.gameObject.name} движется (скорость {rb.velocity.magnitude:F2}) - пропускаем");
+                    continue;
+                }
+                
                 // Проверяем, что корж находится на торте (рядом с тарелкой)
                 if (underCakePlate != null)
                 {
-                    float distance = Vector3.Distance(obj.transform.position, underCakePlate.position);
-                    if (distance < 2f) // В радиусе 2 единиц от тарелки
+                    float distance = Vector3.Distance(pickup.transform.position, underCakePlate.position);
+                    Debug.Log($"  - Корж {pickup.gameObject.name} на расстоянии {distance:F2} от тарелки");
+                    
+                    if (distance < 9f) // Увеличен радиус до 9 единиц
                     {
-                        cakeLayers.Add(obj);
+                        cakeLayers.Add(pickup.gameObject);
+                        Debug.Log($"  ✓ Корж {pickup.gameObject.name} добавлен в список!");
                     }
+                    else
+                    {
+                        Debug.Log($"  ✗ Корж {pickup.gameObject.name} слишком далеко от тарелки");
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("  ✗ Тарелка не назначена!");
                 }
             }
         }
@@ -86,7 +124,16 @@ public class CakeManager : MonoBehaviour
         // Сортируем коржи по высоте (снизу вверх)
         cakeLayers.Sort((a, b) => a.transform.position.y.CompareTo(b.transform.position.y));
         
-        Debug.Log($"CakeManager собрал {cakeLayers.Count} коржей");
+        Debug.Log($"=== CakeManager собрал {cakeLayers.Count} коржей ===");
+        
+        if (cakeLayers.Count == 0)
+        {
+            Debug.LogWarning("⚠️ Коржи не найдены! Проверьте:");
+            Debug.LogWarning("  1. Есть ли объекты с компонентом PickupObject и типом Korzh");
+            Debug.LogWarning("  2. Находятся ли они рядом с тарелкой (в радиусе 9 единиц)");
+            Debug.LogWarning("  3. Не движутся ли коржи и не связаны ли с платформой");
+            Debug.LogWarning("  4. Назначена ли тарелка в CakeManager");
+        }
     }
 
     /// <summary>
@@ -183,10 +230,10 @@ public class CakeManager : MonoBehaviour
                 col.enabled = false;
             }
             
-            // Утаскиваем корж вниз
+            // Утаскиваем корж вправо
             Vector3 startPos = bottomLayer.transform.position;
-            float stealDistance = 3f; // Расстояние утаскивания
-            Vector3 targetPos = startPos + Vector3.down * stealDistance;
+            float stealDistance = 5f; // Расстояние утаскивания
+            Vector3 targetPos = startPos + Vector3.right * stealDistance;
             
             float elapsedTime = 0f;
             float duration = stealDistance / stealSpeed;
@@ -229,13 +276,6 @@ public class CakeManager : MonoBehaviour
         }
         
         isStealingInProgress = false;
-        
-        // Если коржи закончились
-        if (cakeLayers.Count == 0)
-        {
-            Debug.Log("Все коржи утащены! Игра окончена!");
-            // Здесь можно вызвать событие окончания игры
-        }
     }
     
     /// <summary>
@@ -249,6 +289,30 @@ public class CakeManager : MonoBehaviour
             // Пересортировываем по высоте
             cakeLayers.Sort((a, b) => a.transform.position.y.CompareTo(b.transform.position.y));
             Debug.Log($"Добавлен новый корж. Всего коржей: {cakeLayers.Count}");
+        }
+    }
+    
+    /// <summary>
+    /// Обновляет список коржей (пересканирует область вокруг тарелки)
+    /// </summary>
+    public void UpdateCakeLayers()
+    {
+        AutoCollectCakeLayers();
+    }
+    
+    /// <summary>
+    /// Вызывается каждые несколько секунд для обновления списка коржей
+    /// </summary>
+    void Update()
+    {
+        // Обновляем список коржей каждые 2 секунды
+        if (Time.frameCount % 120 == 0) // Примерно каждые 2 секунды при 60 FPS
+        {
+            // Только если список пуст или тараканы уже у торта
+            if (cakeLayers.Count == 0 || enemiesAtCake.Count > 0)
+            {
+                AutoCollectCakeLayers();
+            }
         }
     }
     

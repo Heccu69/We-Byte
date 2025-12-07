@@ -10,7 +10,7 @@ public class EnemyMove : MonoBehaviour
     public float _speed = 0.5f;
     
     // Расстояние, на котором враг останавливается (подберите значение под ваш масштаб)
-    public float stopDistance = 0.5f;
+    public float stopDistance = 0.2f;
     
     // Менеджер торта
     private CakeManager cakeManager;
@@ -23,18 +23,29 @@ public class EnemyMove : MonoBehaviour
 
     private void Start()
     {
-        // Автоматически находим торт, если не назначен
+        // Автоматически находим тарелку (UnderCake), если не назначен
         if (cake == null)
         {
+            // Сначала пробуем найти по тегу
             GameObject cakeObject = GameObject.FindGameObjectWithTag("Cake");
             if (cakeObject != null)
             {
                 cake = cakeObject.transform;
-                Debug.Log($"Таракан нашел торт: {cakeObject.name}");
+                Debug.Log($"Таракан нашел тарелку: {cakeObject.name}");
             }
             else
             {
-                Debug.LogWarning("Торт не найден! Убедитесь, что у объекта торта есть тег 'Cake'");
+                // Если не нашли по тегу, ищем по имени
+                GameObject underCake = GameObject.Find("UnderCake");
+                if (underCake != null)
+                {
+                    cake = underCake.transform;
+                    Debug.Log($"Таракан нашел тарелку по имени: {underCake.name}");
+                }
+                else
+                {
+                    Debug.LogWarning("Тарелка не найдена! Убедитесь, что у объекта UnderCake есть тег 'Cake' или имя 'UnderCake'");
+                }
             }
         }
         
@@ -55,6 +66,41 @@ public class EnemyMove : MonoBehaviour
         if (cakeManager == null)
         {
             Debug.LogWarning("CakeManager не найден! Создайте объект с компонентом CakeManager");
+        }
+        
+        // Игнорируем коллизии с коржами, чтобы тараканы могли подойти к тарелке
+        IgnoreKorzhCollisions();
+    }
+    
+    void IgnoreKorzhCollisions()
+    {
+        // Находим все коржи
+        GameObject[] korzhs = GameObject.FindGameObjectsWithTag("ConveyorObject");
+        Collider2D enemyCollider = GetComponent<Collider2D>();
+        
+        if (enemyCollider == null) return;
+        
+        foreach (GameObject korzh in korzhs)
+        {
+            Collider2D korzhCollider = korzh.GetComponent<Collider2D>();
+            if (korzhCollider != null)
+            {
+                Physics2D.IgnoreCollision(enemyCollider, korzhCollider);
+            }
+        }
+        
+        // Также ищем по компоненту PickupObject
+        PickupObject[] allPickups = FindObjectsOfType<PickupObject>();
+        foreach (PickupObject pickup in allPickups)
+        {
+            if (pickup.objectType == ObjectType.Korzh)
+            {
+                Collider2D korzhCollider = pickup.GetComponent<Collider2D>();
+                if (korzhCollider != null)
+                {
+                    Physics2D.IgnoreCollision(enemyCollider, korzhCollider);
+                }
+            }
         }
     }
 

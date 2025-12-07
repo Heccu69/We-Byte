@@ -118,6 +118,16 @@ public class ConveyorSpawner : MonoBehaviour
         // Добавляем тег для конвейера
         korzh.tag = "ConveyorObject";
         
+        // Добавляем компонент PickupObject, если его нет
+        PickupObject pickupObj = korzh.GetComponent<PickupObject>();
+        if (pickupObj == null)
+        {
+            pickupObj = korzh.AddComponent<PickupObject>();
+            pickupObj.objectType = ObjectType.Korzh;
+            pickupObj.objectName = "Корж";
+            Debug.Log($"Добавлен компонент PickupObject к коржу {korzh.name}");
+        }
+        
         // Добавляем компонент для связи с платформой
         ConveyorPairLink korzhLink = korzh.AddComponent<ConveyorPairLink>();
         korzhLink.pairedObject = platform;
