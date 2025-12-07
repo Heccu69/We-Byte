@@ -100,3 +100,4 @@ InitTestScene*.unity*
 ProjectSettings/ProjectVersion.txt
 Packages/manifest.json
 Packages/packages-lock.json
+/exe
