@@ -913,27 +913,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: f9eea83d0e1a27642a1f94ed76d78f96, type: 3}
   m_PrefabInstance: {fileID: 1408661765}
   m_PrefabAsset: {fileID: 0}
---- !u!65 &492537345
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 492537344}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1.16, y: 0.19, z: 1.16}
-  m_Center: {x: 0, y: 0, z: -0.39}
 --- !u!4 &492537346 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: f9eea83d0e1a27642a1f94ed76d78f96, type: 3}
@@ -958,6 +937,51 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 8
   showDebugInfo: 1
+--- !u!61 &492537348
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 492537344}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0.000000059604645, y: 1.6417735}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  serializedVersion: 2
+  m_Size: {x: 1.202272, y: 0.11858988}
+  m_EdgeRadius: 0
 --- !u!4 &493779958 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 5a62ff66c2ad10c499899f98803bc5fe, type: 3}
@@ -1451,6 +1475,56 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 925752221}
   m_CullTransparentMesh: 1
+--- !u!1 &1072341270
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1072341272}
+  - component: {fileID: 1072341271}
+  m_Layer: 0
+  m_Name: CakeManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1072341271
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1072341270}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60f1b17daa3df5e4b93671b9eebba61e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  underCakePlate: {fileID: 492537346}
+  cakeLayers: []
+  baseStealSpeed: 0.5
+  speedPerEnemy: 0.3
+  queueSpacing: 0.5
+  firstEnemyOffset: {x: 0.5, y: 0, z: 0}
+--- !u!4 &1072341272
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1072341270}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -3, y: -2.98, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1086511197
 GameObject:
   m_ObjectHideFlags: 0
@@ -1931,10 +2005,10 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f9eea83d0e1a27642a1f94ed76d78f96, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 492537345}
+      addedObject: {fileID: 492537347}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f9eea83d0e1a27642a1f94ed76d78f96, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 492537347}
+      addedObject: {fileID: 492537348}
   m_SourcePrefab: {fileID: 100100000, guid: f9eea83d0e1a27642a1f94ed76d78f96, type: 3}
 --- !u!1 &1455359668
 GameObject:
@@ -2608,12 +2682,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyPrefab: {fileID: 7769559275760476508, guid: 5047bf01ae3eafe48a9e2fb1e125a028, type: 3}
-  minSpawnInterval: 10
-  maxSpawnInterval: 60
+  minSpawnInterval: 1
+  maxSpawnInterval: 10
   spawnMinX: -1
   spawnMaxX: 10.5
   spawnMinY: -3.1
-  spawnMaxY: -1
+  spawnMaxY: -2.5
   maxEnemies: 3
   autoStart: 1
 --- !u!4 &1563890025
@@ -3376,3 +3450,4 @@ SceneRoots:
   - {fileID: 230207285}
   - {fileID: 743938123}
   - {fileID: 1563890025}
+  - {fileID: 1072341272}
