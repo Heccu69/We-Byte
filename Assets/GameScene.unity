@@ -1554,7 +1554,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb589b22e5ce6d640b384c7e11c58d50, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  transitionDuration: 300
+  transitionDuration: 180
   mainLight: {fileID: 2140504452}
   windowLight: {fileID: 1542826538}
   morningLightColor: {r: 1, g: 0.9490196, b: 0.8, a: 1}
@@ -1777,7 +1777,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   minKorzhCount: 5
-  maxKorzhCount: 15
+  maxKorzhCount: 9
 --- !u!4 &1278820740
 Transform:
   m_ObjectHideFlags: 0

@@ -5,173 +5,128 @@ using UnityEngine;
 public class EnemyMove : MonoBehaviour
 {
     public Rigidbody2D rgb;
-    public Transform cake;
     public SpriteRenderer spriteRenderer;
-    public float _speed = 0.5f;
+    public float _speed = 2f; // Скорость движения
     
-    // Расстояние, на котором враг останавливается (подберите значение под ваш масштаб)
-    public float stopDistance = 0.2f;
+    [Header("Настройки движения")]
+    public float changeDirectionTime = 2f; // Время до смены направления
+    public Vector2 movementAreaMin = new Vector2(-10f, -5f); // Минимальные границы области
+    public Vector2 movementAreaMax = new Vector2(10f, 5f);   // Максимальные границы области
     
-    // Менеджер торта
-    private CakeManager cakeManager;
+    [Header("Настройки испуга")]
+    public float scaredSpeedMultiplier = 2f; // Множитель скорости при испуге
     
-    // Флаг достижения торта
-    private bool hasReachedCake = false;
+    private Vector2 currentDirection;
+    private float directionTimer;
     
-    // Позиция в очереди
-    private Vector3? queuePosition = null;
+    // Состояние испуга
+    private bool isScared = false;
+    private float scaredTimer = 0f;
 
     private void Start()
     {
-        // Автоматически находим тарелку (UnderCake), если не назначен
-        if (cake == null)
-        {
-            // Сначала пробуем найти по тегу
-            GameObject cakeObject = GameObject.FindGameObjectWithTag("Cake");
-            if (cakeObject != null)
-            {
-                cake = cakeObject.transform;
-                Debug.Log($"Таракан нашел тарелку: {cakeObject.name}");
-            }
-            else
-            {
-                // Если не нашли по тегу, ищем по имени
-                GameObject underCake = GameObject.Find("UnderCake");
-                if (underCake != null)
-                {
-                    cake = underCake.transform;
-                    Debug.Log($"Таракан нашел тарелку по имени: {underCake.name}");
-                }
-                else
-                {
-                    Debug.LogWarning("Тарелка не найдена! Убедитесь, что у объекта UnderCake есть тег 'Cake' или имя 'UnderCake'");
-                }
-            }
-        }
-        
-        // Настраиваем гравитацию для быстрого падения
+        // Настраиваем физику для движения по столу без прыжков
         if (rgb != null)
         {
             rgb.gravityScale = 3f; // Увеличенная гравитация
+            
+            // Замораживаем вращение, чтобы таракан не переворачивался
+            rgb.constraints = RigidbodyConstraints2D.FreezeRotation;
+            
+            // Отключаем возможность прыжков (таракан остается на поверхности)
+            rgb.mass = 1f;
+            rgb.drag = 0.5f; // Небольшое сопротивление
         }
         
-        // Сразу поворачиваемся к торту при спавне
-        if (cake != null && spriteRenderer != null)
-        {
-            spriteRenderer.flipX = (cake.position.x > transform.position.x);
-        }
+        // Выбираем случайное направление (только по горизонтали)
+        ChooseRandomDirection();
         
-        // Находим менеджер торта
-        cakeManager = FindObjectOfType<CakeManager>();
-        if (cakeManager == null)
-        {
-            Debug.LogWarning("CakeManager не найден! Создайте объект с компонентом CakeManager");
-        }
-        
-        // Игнорируем коллизии с коржами, чтобы тараканы могли подойти к тарелке
-        IgnoreKorzhCollisions();
+        // Сбрасываем таймер
+        directionTimer = changeDirectionTime;
     }
     
-    void IgnoreKorzhCollisions()
+    /// <summary>
+    /// Выбрать случайное направление движения (только горизонтальное)
+    /// </summary>
+    void ChooseRandomDirection()
     {
-        // Находим все коржи
-        GameObject[] korzhs = GameObject.FindGameObjectsWithTag("ConveyorObject");
-        Collider2D enemyCollider = GetComponent<Collider2D>();
+        // Случайное направление: влево (-1) или вправо (1)
+        float horizontalDir = Random.value > 0.5f ? 1f : -1f;
         
-        if (enemyCollider == null) return;
-        
-        foreach (GameObject korzh in korzhs)
-        {
-            Collider2D korzhCollider = korzh.GetComponent<Collider2D>();
-            if (korzhCollider != null)
-            {
-                Physics2D.IgnoreCollision(enemyCollider, korzhCollider);
-            }
-        }
-        
-        // Также ищем по компоненту PickupObject
-        PickupObject[] allPickups = FindObjectsOfType<PickupObject>();
-        foreach (PickupObject pickup in allPickups)
-        {
-            if (pickup.objectType == ObjectType.Korzh)
-            {
-                Collider2D korzhCollider = pickup.GetComponent<Collider2D>();
-                if (korzhCollider != null)
-                {
-                    Physics2D.IgnoreCollision(enemyCollider, korzhCollider);
-                }
-            }
-        }
+        // Только горизонтальное движение (Y = 0), чтобы не прыгать
+        currentDirection = new Vector2(horizontalDir, 0f);
     }
 
     private void Update()
     {
-        // Проверяем, что торт назначен
-        if (cake == null) return;
-        
-        // Определяем целевую позицию
-        Vector3 targetPosition;
-        
-        if (queuePosition.HasValue)
+        // Обновляем таймер испуга
+        if (isScared)
         {
-            // Если есть позиция в очереди, идем к ней
-            targetPosition = queuePosition.Value;
-        }
-        else
-        {
-            // Иначе идем к торту
-            targetPosition = cake.position;
-        }
-        
-        // Вычисляем вектор направления
-        Vector2 direction = (targetPosition - transform.position).normalized;
-        
-        // Вычисляем расстояние
-        float distance = Vector2.Distance(transform.position, targetPosition);
-        
-        if (distance > stopDistance)
-        {
-            // Если дальше порога — двигаемся
-            rgb.velocity = direction * _speed;
-        }
-        else
-        {
-            // Если близко — останавливаемся
-            rgb.velocity = Vector2.zero;
-            
-            // Если достигли торта и еще не зарегистрировались
-            if (!hasReachedCake && !queuePosition.HasValue && cakeManager != null)
+            scaredTimer -= Time.deltaTime;
+            if (scaredTimer <= 0f)
             {
-                hasReachedCake = true;
-                cakeManager.RegisterEnemyAtCake(this);
+                isScared = false;
             }
         }
-
-        // Поворот спрайта в сторону цели (инвертировано)
-        if (targetPosition.x < transform.position.x)
+        
+        // Уменьшаем таймер смены направления (только если не испуган)
+        if (!isScared)
         {
-            spriteRenderer.flipX = false;
+            directionTimer -= Time.deltaTime;
+            
+            // Если время вышло - выбираем новое направление
+            if (directionTimer <= 0f)
+            {
+                ChooseRandomDirection();
+                directionTimer = changeDirectionTime;
+            }
         }
-        else
+        
+        // Проверяем границы и отражаем направление при столкновении
+        Vector2 currentPos = transform.position;
+        
+        if (currentPos.x <= movementAreaMin.x || currentPos.x >= movementAreaMax.x)
         {
-            spriteRenderer.flipX = true;
+            currentDirection.x = -currentDirection.x; // Отражаем по X
+        }
+        
+        if (currentPos.y <= movementAreaMin.y || currentPos.y >= movementAreaMax.y)
+        {
+            currentDirection.y = -currentDirection.y; // Отражаем по Y
+        }
+        
+        // Вычисляем скорость (увеличенная при испуге)
+        float currentSpeed = isScared ? _speed * scaredSpeedMultiplier : _speed;
+        
+        // Двигаемся в текущем направлении
+        if (rgb != null)
+        {
+            rgb.velocity = currentDirection * currentSpeed;
+        }
+        
+        // Поворот спрайта в сторону движения
+        if (spriteRenderer != null)
+        {
+            if (currentDirection.x < 0)
+            {
+                spriteRenderer.flipX = false; // Смотрит влево
+            }
+            else if (currentDirection.x > 0)
+            {
+                spriteRenderer.flipX = true; // Смотрит вправо
+            }
         }
     }
     
     /// <summary>
-    /// Устанавливает позицию в очереди (вызывается CakeManager)
+    /// Испугать таракана (вызывается ложкой)
     /// </summary>
-    public void SetQueuePosition(Vector3 position)
+    public void GetScared(float duration)
     {
-        queuePosition = position;
-    }
-    
-    private void OnDestroy()
-    {
-        // Отписываемся от менеджера при уничтожении
-        if (cakeManager != null && hasReachedCake)
-        {
-            cakeManager.UnregisterEnemy(this);
-        }
+        isScared = true;
+        scaredTimer = duration;
+        
+        // Таракан бежит быстрее, когда испуган
+        Debug.Log($"Таракан {gameObject.name} испуган!");
     }
 }

@@ -28,25 +28,25 @@ public class CakeManager : MonoBehaviour
     [Tooltip("Смещение первого таракана от тарелки")]
     public Vector3 firstEnemyOffset = new Vector3(0.5f, 0f, 0f);
     
-    // Очередь тараканов у торта
+    // ОТКЛЮЧЕНО: Система кражи коржей деактивирована
+    // Это поле больше не используется
     private List<EnemyMove> enemiesAtCake = new List<EnemyMove>();
-    
-    // Флаг процесса утаскивания
-    private bool isStealingInProgress = false;
-    
-    // Текущий утаскиваемый корж
-    private GameObject currentStolenLayer = null;
 
     void Start()
     {
-        // Автоматически находим тарелку, если не назначена
+        // ОТКЛЮЧЕНО: Система кражи коржей деактивирована
+        // Тараканы просто бегают по столу
+        Debug.Log("CakeManager: Система кражи коржей отключена. Тараканы просто бегают по столу.");
+        
+        /*
+        // Находим тарелку, если не назначена
         if (underCakePlate == null)
         {
-            GameObject plate = GameObject.Find("UnderCake");
-            if (plate != null)
+            GameObject underCake = GameObject.Find("UnderCake");
+            if (underCake != null)
             {
-                underCakePlate = plate.transform;
-                Debug.Log($"CakeManager нашел тарелку: {plate.name}");
+                underCakePlate = underCake.transform;
+                Debug.Log($"CakeManager нашел тарелку: {underCake.name}");
             }
             else
             {
@@ -59,6 +59,7 @@ public class CakeManager : MonoBehaviour
         {
             AutoCollectCakeLayers();
         }
+        */
     }
     
     void AutoCollectCakeLayers()
@@ -138,144 +139,40 @@ public class CakeManager : MonoBehaviour
 
     /// <summary>
     /// Регистрирует таракана, достигшего торта
+    /// ОТКЛЮЧЕНО - тараканы просто бегают
     /// </summary>
     public void RegisterEnemyAtCake(EnemyMove enemy)
     {
-        if (!enemiesAtCake.Contains(enemy))
-        {
-            enemiesAtCake.Add(enemy);
-            Debug.Log($"Таракан добавлен в очередь. Всего тараканов: {enemiesAtCake.Count}");
-            
-            // Назначаем позицию в очереди
-            UpdateEnemyQueuePositions();
-            
-            // Если это первый таракан, начинаем утаскивание
-            if (enemiesAtCake.Count == 1 && !isStealingInProgress)
-            {
-                StartCoroutine(StealCakeLayer());
-            }
-        }
+        // ОТКЛЮЧЕНО: Тараканы не взаимодействуют с тортом
+        // Просто бегают по столу
     }
     
     /// <summary>
     /// Удаляет таракана из очереди
+    /// ОТКЛЮЧЕНО - тараканы просто бегают
     /// </summary>
     public void UnregisterEnemy(EnemyMove enemy)
     {
-        if (enemiesAtCake.Contains(enemy))
-        {
-            enemiesAtCake.Remove(enemy);
-            Debug.Log($"Таракан удален из очереди. Осталось тараканов: {enemiesAtCake.Count}");
-            
-            UpdateEnemyQueuePositions();
-        }
+        // ОТКЛЮЧЕНО: Тараканы не взаимодействуют с тортом
     }
     
     /// <summary>
     /// Обновляет позиции тараканов в очереди
+    /// ОТКЛЮЧЕНО - тараканы просто бегают
     /// </summary>
     void UpdateEnemyQueuePositions()
     {
-        if (underCakePlate == null) return;
-        
-        for (int i = 0; i < enemiesAtCake.Count; i++)
-        {
-            if (enemiesAtCake[i] != null)
-            {
-                // Позиция в очереди: первый у тарелки, остальные за ним
-                Vector3 queuePosition = underCakePlate.position + firstEnemyOffset + Vector3.right * (i * queueSpacing);
-                enemiesAtCake[i].SetQueuePosition(queuePosition);
-            }
-        }
+        // ОТКЛЮЧЕНО: Тараканы не выстраиваются в очередь
     }
     
     /// <summary>
     /// Процесс утаскивания коржа
+    /// ОТКЛЮЧЕНО - тараканы не крадут коржи
     /// </summary>
     IEnumerator StealCakeLayer()
     {
-        while (enemiesAtCake.Count > 0 && cakeLayers.Count > 0)
-        {
-            isStealingInProgress = true;
-            
-            // Берем нижний корж
-            GameObject bottomLayer = cakeLayers[0];
-            
-            if (bottomLayer == null)
-            {
-                // Корж был уничтожен, удаляем из списка
-                cakeLayers.RemoveAt(0);
-                continue;
-            }
-            
-            currentStolenLayer = bottomLayer;
-            
-            // Вычисляем скорость утаскивания (зависит от количества тараканов)
-            float stealSpeed = baseStealSpeed + (enemiesAtCake.Count - 1) * speedPerEnemy;
-            
-            Debug.Log($"Тараканы утаскивают корж! Скорость: {stealSpeed} (тараканов: {enemiesAtCake.Count})");
-            
-            // Отключаем физику коржа
-            Rigidbody2D rb = bottomLayer.GetComponent<Rigidbody2D>();
-            if (rb != null)
-            {
-                rb.bodyType = RigidbodyType2D.Kinematic;
-                rb.velocity = Vector2.zero;
-            }
-            
-            // Отключаем коллайдер
-            Collider2D col = bottomLayer.GetComponent<Collider2D>();
-            if (col != null)
-            {
-                col.enabled = false;
-            }
-            
-            // Утаскиваем корж вправо
-            Vector3 startPos = bottomLayer.transform.position;
-            float stealDistance = 5f; // Расстояние утаскивания
-            Vector3 targetPos = startPos + Vector3.right * stealDistance;
-            
-            float elapsedTime = 0f;
-            float duration = stealDistance / stealSpeed;
-            
-            while (elapsedTime < duration)
-            {
-                // Обновляем скорость, если количество тараканов изменилось
-                stealSpeed = baseStealSpeed + (enemiesAtCake.Count - 1) * speedPerEnemy;
-                duration = stealDistance / stealSpeed;
-                
-                elapsedTime += Time.deltaTime;
-                float t = elapsedTime / duration;
-                
-                if (bottomLayer != null)
-                {
-                    bottomLayer.transform.position = Vector3.Lerp(startPos, targetPos, t);
-                }
-                else
-                {
-                    break;
-                }
-                
-                yield return null;
-            }
-            
-            // Уничтожаем корж
-            if (bottomLayer != null)
-            {
-                Destroy(bottomLayer);
-            }
-            
-            // Удаляем из списка
-            cakeLayers.RemoveAt(0);
-            currentStolenLayer = null;
-            
-            Debug.Log($"Корж утащен! Осталось коржей: {cakeLayers.Count}");
-            
-            // Небольшая пауза перед следующим коржом
-            yield return new WaitForSeconds(0.5f);
-        }
-        
-        isStealingInProgress = false;
+        // ОТКЛЮЧЕНО: Утаскивание коржей деактивировано
+        yield break;
     }
     
     /// <summary>
@@ -302,18 +199,11 @@ public class CakeManager : MonoBehaviour
     
     /// <summary>
     /// Вызывается каждые несколько секунд для обновления списка коржей
+    /// ОТКЛЮЧЕНО - тараканы не крадут коржи
     /// </summary>
     void Update()
     {
-        // Обновляем список коржей каждые 2 секунды
-        if (Time.frameCount % 120 == 0) // Примерно каждые 2 секунды при 60 FPS
-        {
-            // Только если список пуст или тараканы уже у торта
-            if (cakeLayers.Count == 0 || enemiesAtCake.Count > 0)
-            {
-                AutoCollectCakeLayers();
-            }
-        }
+        // ОТКЛЮЧЕНО: Автоматический сбор коржей не нужен
     }
     
     /// <summary>

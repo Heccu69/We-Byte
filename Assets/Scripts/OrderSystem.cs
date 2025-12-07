@@ -78,6 +78,9 @@ public class OrderSystem : MonoBehaviour
             ScoreManager.Instance.AddScore(1);
         }
         
+        // Сохраняем статистику заказов
+        SaveOrderStats(true);
+        
         // Генерируем новый заказ
         GenerateNewOrder();
     }
@@ -91,7 +94,24 @@ public class OrderSystem : MonoBehaviour
         
         // НЕ добавляем очки за неправильный заказ
         
+        // Сохраняем статистику заказов
+        SaveOrderStats(false);
+        
         // Генерируем новый заказ
         GenerateNewOrder();
+    }
+    
+    /// <summary>
+    /// Сохранить статистику заказов
+    /// </summary>
+    private void SaveOrderStats(bool isCorrect)
+    {
+        SaveData saveData = SaveSystem.Load();
+        saveData.totalCompletedOrders++;
+        if (isCorrect)
+        {
+            saveData.totalCorrectOrders++;
+        }
+        SaveSystem.Save(saveData);
     }
 }
